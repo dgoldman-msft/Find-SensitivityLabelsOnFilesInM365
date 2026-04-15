@@ -428,6 +428,18 @@ function Find-SensitivityLabelsOnFilesInM365 {
         Write-ToLogFile -StringObject $separator -LogDirectory $LogDirectory
         Write-Host "Log file written to: $(Join-Path $LogDirectory 'Logging.txt')" -ForegroundColor Cyan
 
+        # Disconnect the IPPS / Exchange Online session if this function established it so we do not leave orphaned remote sessions open.
+        if ($ConnectIPPS) {
+            try {
+                Disconnect-ExchangeOnline -Confirm:$false -ErrorAction Stop
+                Write-Verbose "Disconnected from Exchange Online / IPPS session"
+                Write-ToLogFile -StringObject "$(Get-TimeStamp) Disconnected from Exchange Online / IPPS session" -LogDirectory $LogDirectory
+            }
+            catch {
+                Write-ToLogFile -StringObject "$(Get-TimeStamp) WARNING: Could not disconnect from Exchange Online: $($_.Exception.Message)" -LogDirectory $LogDirectory
+            }
+        }
+
         # Only output the results table if at least one match was found
         $matched = $report | Where-Object { $_.HasSensivityLabel }
         if ($matched) {
